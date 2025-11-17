@@ -74,12 +74,23 @@ func parseSSHConnections(raw string) map[string]int {
 		}
 
 		payload := strings.TrimSpace(strings.TrimPrefix(line, "sshd:"))
-		atIndex := strings.Index(payload, "@")
-		if atIndex == -1 {
+		if payload == "" {
 			continue
 		}
 
-		username := strings.TrimSpace(payload[:atIndex])
+		// Ignora processos privilegiados intermediários: "sshd: user [priv]"
+		if strings.HasSuffix(payload, "[priv]") {
+			continue
+		}
+
+		// Remove qualquer marcador extra como "(accepted)" ou "(mux start)"
+		payload = strings.Fields(payload)[0]
+
+		if idx := strings.Index(payload, "@"); idx != -1 {
+			payload = payload[:idx]
+		}
+
+		username := strings.TrimSpace(payload)
 		if username == "" {
 			continue
 		}
